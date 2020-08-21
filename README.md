@@ -96,14 +96,38 @@ specified number of seconds.
 Building an executable
 ---------------------------------------------------------------------------
 
-Assuming the libraries for
-	a. FFTW
-	b. portaudio
-	c. libsamplerate
-	d. the device
+To compile (and run) the program, one needs to have installed
+a number of libraries
 
-are installed, building an executable is in two steps
+	sudo apt-get update
+	sudo apt-get install git cmake
+	sudo apt-get install build-essential g++
+	sudo apt-get install pkg-config
+	sudo apt-get install libsndfile1-dev
+	sudo apt-get install libfftw3-dev portaudio19-dev
+	sudo apt-get install libfaad-dev zlib1g-dev 
+	sudo apt-get install libusb-1.0-0-dev mesa-common-dev
+	sudo apt-get install libgl1-mesa-dev
 
+
+Installing the library for the SDRplay requires downloading the library from the "www.SDRplay.com" site.
+
+For pluto the "libiio-dev" and "libad9361" have to be installed.
+Note that on "old" Ubuntu versions, e.g. 16.04, only an old,
+incomplete, version of the library is available.
+Install a recent one with
+
+	git clone https://github.com/analogdevicesinc/libad9361-iio
+	cd libad9361
+	mkdir build
+	cd build
+	cmake ..
+	sudo make install
+	cd ../..
+
+Then, download the sources for dab-pluto and build and executable
+
+	git clone https://github.com/JvanKatwijk/dab-pluto
 	cd dab-pluto
 	mkdir build
 	cd build
