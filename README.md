@@ -59,8 +59,10 @@ the one with the 2100000 to 2048000 conversion.
 The chosen approach has a number of disadvantages as well:
 
 	a. the device driver is not independent anymore, it "knows" it has to pass the incoming samples to a given processor;
+	
 	b. the frequency correction is closely coupled to the thread collecting the device. In e.g. the RTLSDR driver it is not allowed to
 alter settings from within the callback function;
+
 	c. the code of the ofdm processor is now built up as a huge case statement, a sample is sent to the ofdm processor, and some form of "global" state
 has to be maintained to guide the sample to the place where it is processed.
 
