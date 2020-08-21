@@ -60,22 +60,23 @@ The chosen approach has a number of disadvantages as well:
 
 	a. the device driver is not independent anymore, it "knows" it has to pass the incoming samples to a given processor;
 	
-	b. the frequency correction is closely coupled to the thread collecting the device. In e.g. the RTLSDR driver it is not allowed to
-alter settings from within the callback function;
+	b. the frequency correction is closely coupled to the thread collecting the device. 
+	In e.g. the RTLSDR driver it is not allowed to alter settings from within the callback function;
 
-	c. the code of the ofdm processor is now built up as a huge case statement, a sample is sent to the ofdm processor, and some form of "global" state
-has to be maintained to guide the sample to the place where it is processed.
+	c. the code of the ofdm processor is now built up as a really huge case statement, a sample is 
+	sent to the ofdm processor, and some form of "global" state has to be maintained to guide the sample
+	to the place where it is processed. So, readability of the code is less!
 
 ---------------------------------------------------------------------------
 Limitations
 ----------------------------------------------------------------------------
 
-It is tempting to consider building the executable for tunning
+It is tempting to consider building the executable for running
 on the Pluto itself, after all it contains a Linux system.
-However, the CPU on the Pluto is - accoding to the description -
+However, the CPU on the Pluto is - according to the description -
 a single core 667 MHz CPU, while the RPI 2, where the software is
 running smoothly, has a 4 core CPU with a higher clock rate and
-the average load is roughly 50 percent.
+the average load is there roughly 50 percent.
 
 -----------------------------------------------------------------------------
 Running the program
