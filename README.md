@@ -8,10 +8,10 @@ just the audio services.
 
 The supported samplerates for the Adalm Pluto start slightly higher than the required
 2048000 samples/second we need for DAB. So one of the experiments was to compare a
-solution with a fractional decimation from 2100000 samples per second
-to 2048000 to an integer decimation from 2 * 2048000 to 2048000 samples
-per second. The latter obviously requires some decent filtering (the DAB signal has a
-width of just over 1.5 MHz) of the input. The ad9361 library provides a 
+solution with a fractional decimation (implemented by linear interpolation) 
+from 2100000 samples per second to 2048000 to an integer decimation from 2 * 2048000
+to 2048000 samples per second. The latter obviously requires some decent filtering
+(the DAB signal has a width of just over 1.5 MHz) of the input. The ad9361 library provides a 
 suitable baseband filtering that seems to work well.
 Since fractional decimation requires interpolation of complex (floating point)
 numbers, and integer decimation - provided filtering is OK - only requires
@@ -23,17 +23,17 @@ each sample is made up of 4 bytes, so the total input is around 16 M bytes/secon
 
 A second experiment was to increase the coupling of the device handler,
 the one responsible for collecting the samples, with the ofdm related code
-in order to see id the frequency correction can be moved to the hardware device
+in order to see if the frequency correction can be moved to the hardware device
 rather than being executed in software.
 
 Note that in Qt-DAB and in dab-cmdline, the ofdm "processor" is built
 up running in its own thread, looking for samples in a (kind of) shared
 buffer, a buffer maintained in the device handler. Device handler
 is completely unaware of who is looking at the data or what happens to
-the data. The ofdm "processor" "pulls" the samples in, computes DAB frames and
-- as part of that - computes the error in the frequency, and corrects the latter
+the data. The ofdm "processor" "pulls" the samples in, computes DAB frames and -
+as part of that - computes the error in the frequency, and corrects the latter
 by multiplying the incoming samples with computed correction values from an
-oscillator (table). Profiles show that this part of processing the samples
+oscillator (table). Profiles show that processing the samples
 this way is pretty expensive (again, note that we have here 2048000 complex multiplications
 per second)
 
@@ -46,7 +46,7 @@ and deciding what the frequency offset is for that and the other samples
 is much smaller, and correction can be done by instructing the device
 handler to adapt the frequency of the SDR device.
 
-Note that in a pluto handler, collecting samples is done in a task executed
+Note that in the pluto handler, collecting samples is done in a task executed
 in a separate thread, while in e.g. the SDRplay (well, the version 2 library)
 this is done in the call back function.
 
