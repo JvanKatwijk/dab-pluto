@@ -1,55 +1,60 @@
 ------------------------------------------------------------------------
-experiments with a cmdline DAB decoder for PLUTO
+Experiments with a cmdline DAB decoder for PLUTO (and SDRplay)
 ------------------------------------------------------------------------
 
 When experimenting with DAB for Pluto I needed a subset of the dab-cmdline
 program. After all, I was not interested in data handling whatsoever,
 just the audio services.
 
-The supported samplerates for pluto start slightly higher than the required
-2048000 samples/second. So one of the experiments was to compare a
+The supported samplerates for the Adalm Pluto start slightly higher than the required
+2048000 samples/second we need for DAB. So one of the experiments was to compare a
 solution with a fractional decimation from 2100000 samples per second
-to 2048000 with an integer decimation from 2 * 2048000 to 2048000 samples
-per second. The latter obviously required some decent filtering of the 
-input. The ad9361 library provides a suitable baseband filtering that
-seems to work well.
+to 2048000 to an integer decimation from 2 * 2048000 to 2048000 samples
+per second. The latter obviously requires some decent filtering (the DAB signal has a
+width of just over 1.5 MHz) of the input. The ad9361 library provides a 
+suitable baseband filtering that seems to work well.
 Since fractional decimation requires interpolation of complex (floating point)
 numbers, and integer decimation - provided filtering is OK - only requires
 skipping elements, the approach with integer decimation beats the other one,
 dramatically.
 
-Of course, the inputrate now doubles. It is 4096000 samples per second, where
-each sample is made up of 4 bytes, so around 16 M bytes/second.
+Of course, the inputrate now doubles. It is now 4096000 samples per second, where
+each sample is made up of 4 bytes, so the total input is around 16 M bytes/second.
 
 A second experiment was to increase the coupling of the device handler,
-the one responsible for collecting the samples, with the ofdm relted code.
+the one responsible for collecting the samples, with the ofdm related code
+in order to see id the frequency correction can be moved to the hardware device
+rather than being executed in software.
 
 Note that in Qt-DAB and in dab-cmdline, the ofdm "processor" is built
 up running in its own thread, looking for samples in a (kind of) shared
 buffer, a buffer maintained in the device handler. Device handler
 is completely unaware of who is looking at the data or what happens to
-the data. The consequence is that frequency correction is dome -
-in software by multiplying the incoming samples with values from an
-oscillator (table). Pofiles show that preprocessing the samples
-this way is pretty expensive.
+the data. The ofdm "processor" "pulls" the samples in, computes DAB frames and
+- as part of that - computes the error in the frequency, and corrects the latter
+by multiplying the incoming samples with computed correction values from an
+oscillator (table). Profiles show that this part of processing the samples
+this way is pretty expensive (again, note that we have here 2048000 complex multiplications
+per second)
 
-In dab-2 (a variant of Qt-DAB) and here another approach is taken: the device handler passes
-the samples directly on to the "ofdm processor", the latter now
-executing in the same thread as sample collector in the device handler.
-
-Note that in a pluto handler, collecting samples is done in a task executed
-in a separate thread, while in e.g. the sdrplay (well, the version 2 library)
-this is done in a call back function.
+In dab-2 (a variant of Qt-DAB) and here in dab-pluto another approach is taken: 
+the device handler passes the samples directly on to the "ofdm processor", the latter is now
+implemented as a function, executing in the same thread as the sample collector in the device handler.
 
 The advantage of the approach is that the delay in collecting a sample
 and deciding what the frequency offset is for that and the other samples
 is much smaller, and correction can be done by instructing the device
-handler to adapt the frequency of the device.
+handler to adapt the frequency of the SDR device.
+
+Note that in a pluto handler, collecting samples is done in a task executed
+in a separate thread, while in e.g. the SDRplay (well, the version 2 library)
+this is done in the call back function.
 
 Running the resulting dab-decoder requires less CPU power than the approach
 in dab-cmdline (and Qt-DAB). In spite of the fact that some conversion
 is to take place on the samplerate of the incoming sample stream, the
-dab-pluto decoder runs nicely on an RPI 2.
+dab-pluto decoder runs nicely on an RPI 2 with an average load of app 50 percent.
+
 
 The software tree contains two versions of the device handler for Pluto.
 While the one in the directory "pluto-handler" is the one with the
@@ -58,14 +63,17 @@ the one with the 2100000 to 2048000 conversion.
 
 The chosen approach has a number of disadvantages as well:
 
-	a. the device driver is not independent anymore, it "knows" it has to pass the incoming samples to a given processor;
+	a. the device driver is not independent anymore, it "knows" it has to pass the
+	incoming samples to a given processor and has a reference to the "ofdm processor"
+	as one of its parameters;
 	
-	b. the frequency correction is closely coupled to the thread collecting the device. 
-	In e.g. the RTLSDR driver it is not allowed to alter settings from within the callback function;
+	b. the frequency correction is done in the thread where the samples are collected from the
+	device. In e.g. the RTLSDR driver it is not allowed to alter settings from within the callback function;
 
 	c. the code of the ofdm processor is now built up as a really huge case statement, a sample is 
 	sent to the ofdm processor, and some form of "global" state has to be maintained to guide the sample
-	to the place where it is processed. So, readability of the code is less!
+	to the place where it is processed. The "state" of the ofdm decoding is now maintained in a
+	number of global variables, reducing the readability of the code!
 
 ---------------------------------------------------------------------------
 Limitations
@@ -114,7 +122,7 @@ Installing the library for the SDRplay requires downloading the library from the
 
 For pluto the "libiio-dev" and "libad9361" have to be installed.
 Note that on "old" Ubuntu versions, e.g. 16.04, only an old,
-incomplete, version of the library is available.
+incomplete, version of the libad9361 library is available.
 Install a recent one with
 
 	git clone https://github.com/analogdevicesinc/libad9361-iio
