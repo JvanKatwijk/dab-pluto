@@ -73,6 +73,11 @@ endif ()
             message(FATAL_ERROR "please install libfaad")
         endif ()
 
+	find_package(LibSndFile)
+        if (NOT LIBSNDFILE_FOUND)
+            message(FATAL_ERROR "please install libsndfile")
+        endif ()
+        list(APPEND extraLibs ${LIBSNDFILE_LIBRARY})
 
         find_package(LibSampleRate)
         if (NOT LIBSAMPLERATE_FOUND)
@@ -195,6 +200,7 @@ endif ()
 	     ./dab-api.h
 	     ./audio-sink/audio-base.h
 	     ./audio-sink/audiosink.h
+	     ./audio-sink/filesink.h
 	     ./audio-sink/newconverter.h
 	     ./devices/device-handler.h
 	     ./dab-processor.h
@@ -236,6 +242,7 @@ endif ()
 	     ./main.cpp
 	     ./audio-sink/audio-base.cpp
 	     ./audio-sink/audiosink.cpp
+	     ./audio-sink/filesink.cpp
 	     ./audio-sink/newconverter.cpp
 	     ./devices/device-handler.cpp
 	     ./dab-processor.cpp

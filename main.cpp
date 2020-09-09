@@ -28,6 +28,7 @@
 #include	<complex>
 #include	<vector>
 #include	"audiosink.h"
+#include	"filesink.h"
 #include	"dab-api.h"
 #include	"dab-processor.h"
 #include	"band-handler.h"
@@ -179,13 +180,13 @@ uint8_t		theBand		= BAND_III;
 int16_t		gain		= 60;
 bool		autogain	= true;
 int		ppmOffset	= 0;
-const char	*optionsString	= "T:D:d:M:B:P:A:C:G:Qp:";
+const char	*optionsString	= "T:D:d:M:B:P:A:C:G:Qp:O:";
 #elif	HAVE_SDRPLAY	
 int16_t		GRdB		= 30;
 int16_t		lnaState	= 4;
 bool		autogain	= true;
 int16_t		ppmOffset	= 0;
-const char	*optionsString	= "T:D:d:M:B:P:A:C:G:L:Qp:";
+const char	*optionsString	= "T:D:d:M:B:P:A:C:G:L:Qp:O:";
 #endif
 std::string	soundChannel	= "default";
 int16_t		latency		= 10;
@@ -239,6 +240,16 @@ int	theDuration		= -1;	// no limit
 	      case 'P':
 	         programName	= optarg;
 	         break;
+
+	      case 'O':
+	         fprintf (stderr, "Handling an O option with %s\n", optarg);
+                 soundOut       = new fileSink (std::string (optarg), &err);
+                 if (!err) {
+                    std::cerr << "sorry, could not open file\n";
+                    exit (32);
+                 }
+	         fprintf (stderr, "Handled the O option\n");
+                 break;
 
 	      case 'A':
 	         soundChannel	= optarg;
@@ -294,12 +305,15 @@ int	theDuration		= -1;	// no limit
 	sigemptyset(&sigact.sa_mask);
 	sigact.sa_flags = 0;
 
-//
-	soundOut	= new audioSink	(latency, soundChannel, &err);
-	if (err) {
-	   std::cerr << "no valid sound channel, fatal\n";
-	   exit (33);
+
+	if (soundOut == nullptr) {
+	   soundOut	= new audioSink	(latency, soundChannel, &err);
+	   if (err) {
+	      std::cerr << "no valid sound channel, fatal\n";
+	      exit (33);
+	   }
 	}
+	fprintf (stderr, "soundOut has value\n");
 //
 //	and with a sound device we now can create a "backend"
 	theRadio	= new dabProcessor (syncsignalHandler,
