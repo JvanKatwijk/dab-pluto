@@ -53,12 +53,13 @@ this is done in the call back function.
 Running the resulting dab-decoder requires less CPU power than the approach
 in dab-cmdline (and Qt-DAB). In spite of the fact that some conversion
 is to take place on the samplerate of the incoming sample stream, the
-dab-pluto decoder runs nicely on an RPI 2 with an average load of app 50 percent.
+dab-pluto decoder runs nicely on an RPI 2 with an average
+load of app 50 percent.
 
 
 The software tree contains two versions of the device handler for Pluto.
 While the one in the directory "pluto-handler" is the one with the
-integer factor 2 decimation, and the one in the directory "pluto-handler-old"
+integer factor 2 decimation, the one in the directory "pluto-handler-old" is
 the one with the 2100000 to 2048000 conversion.
 
 The chosen approach has a number of disadvantages as well:
@@ -92,13 +93,19 @@ Running the program
 
 Operation of the decoder is as in dab-cmdline
 
-	dab-pluto -C 12C -P "NPO Radio 4" -Q -T 6
+	dab-cmdline-2 -C 12C -P "NPO Radio 4" -Q -T 6
 
 where the -C option is there to specify the channel;
 where the -P option is there to specify (a prefix of) the name of the service;
 where the -Q option is there to specify that the agc is on;
 where the -T option is there to specify that the program terminates after a
-specified number of seconds.
+specified number of minutes.
+
+There are some more command line options, just run
+
+	dab-cmdline-2
+
+without parameters to have the program show them before stopping.
 
 ---------------------------------------------------------------------------
 Building an executable
@@ -139,21 +146,28 @@ Then, download the sources for dab-pluto and build and executable
 	cd dab-pluto
 	mkdir build
 	cd build
-	cmake .. -DRPI_DEFINED=ON -DPLUTO=ON
+	cmake .. -DRPI_DEFINED=ON -DPLUTO=ON -DSDRPLAY=ON
 	make
 	sudo make install
 
 Of course when compiling on an X64 based machine (with compiler support
 for SSE instructions), the line with cmake becomes
 
-	cmake .. -DX64_DEFINED=ON -DPLUTO=ON
+	cmake .. -DX64_DEFINED=ON -DPLUTO=ON -DSDRPLAY=ON
 
-and in case the executable is being built for the SDRplay, replace "-DPLUTO=ON" by "-DSDRPLAY=ON"
+If not sure whether or not the special instructions are supported,
+just use
+
+	cmake .. -DPLUTO=ON -DSDRPLAY=ON
+
+In case the executable is being built for only either the SDRplay
+or the Adalm Pluto, remove "-DPLUTO=ON" or "-DSDRPLAY=ON" from the command.
 
 -----------------------------------------------------------------------------
 Copyright
 -----------------------------------------------------------------------------
 
+	2020
 	J van Katwijk
 	Lazy Chair Computing
 	J dot vanKatwijk at gmail dot com

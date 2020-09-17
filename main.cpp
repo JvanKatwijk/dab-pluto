@@ -35,7 +35,8 @@
 #include	"ringbuffer.h"
 #ifdef	HAVE_SDRPLAY
 #include	"sdrplay-handler.h"
-#elif	HAVE_PLUTO
+#endif
+#ifdef	HAVE_PLUTO
 #include	"pluto-handler.h"
 #endif
 
@@ -176,18 +177,11 @@ int	main (int argc, char **argv) {
 uint8_t		theMode		= 1;
 std::string	theChannel	= "11C";
 uint8_t		theBand		= BAND_III;
-#ifdef	HAVE_PLUTO
-int16_t		gain		= 60;
 bool		autogain	= true;
-int		ppmOffset	= 0;
-const char	*optionsString	= "T:D:d:M:B:P:A:C:G:Qp:O:";
-#elif	HAVE_SDRPLAY	
+int16_t		gain		= 60;
 int16_t		GRdB		= 30;
 int16_t		lnaState	= 4;
-bool		autogain	= true;
-int16_t		ppmOffset	= 0;
 const char	*optionsString	= "T:D:d:M:B:P:A:C:G:L:Qp:O:";
-#endif
 std::string	soundChannel	= "default";
 int16_t		latency		= 10;
 int16_t		timeSyncTime	= 10;
@@ -201,6 +195,12 @@ int	theDuration		= -1;	// no limit
 
 	std::cerr << "dab_cmdline example,\n \
 	                Copyright 2020 J van Katwijk, Lazy Chair Computing\n";
+#ifdef	HAVE_SDRPLAY
+	std::cerr << "configured with sdrplay (library 2.13)\n";
+#endif
+#ifdef	HAVE_PLUTO
+	std::cerr << "configured with adalm pluto\n";
+#endif
 	timeSynced.	store (false);
 	timesyncSet.	store (false);
 	run.		store (false);
@@ -255,11 +255,6 @@ int	theDuration		= -1;	// no limit
 	         soundChannel	= optarg;
 	         break;
 
-#ifdef	HAVE_PLUTO
-	      case 'G':
-	         gain		= atoi (optarg);
-	         break;
-
 	      case 'Q':
 	         autogain	= true;
 	         break;
@@ -269,29 +264,19 @@ int	theDuration		= -1;	// no limit
 	         fprintf (stderr, "%s \n", optarg);
 	         break;
 
-	      case 'p':
-	         ppmOffset	= atoi (optarg);
-	         break;
 
-#elif	HAVE_SDRPLAY
 	      case 'G':
+#ifdef	HAVE_PLUTO
+	         gain		= atoi (optarg);
+#endif
+#ifdef	HAVE_SDRPLAY
 	         GRdB		= atoi (optarg);
+#endif
 	         break;
 
+#ifdef	HAVE_SDRPLAY
 	      case 'L':
 	         lnaState	= atoi (optarg);
-	         break;
-
-	      case 'Q':
-	         autogain	= true;
-	         break;
-
-	      case 'C':
-	         theChannel	= std::string (optarg);
-	         break;
-
-	      case 'p':
-	         ppmOffset	= atoi (optarg);
 	         break;
 #endif
 	      default:
@@ -333,32 +318,32 @@ int	theDuration		= -1;	// no limit
 	   exit (4);
 	}
 	int32_t frequency	= dabBand. Frequency (theBand, theChannel);
+	theDevice	= nullptr;	// the default
+#ifdef	HAVE_SDRPLAY
 	try {
-	   theDevice	= nullptr;	// the default
-#ifdef	HAVE_PLUTO
-	   theDevice	= new plutoHandler	(theRadio,
-	                                         frequency,
-	                                         gain,
-	                                         autogain);
-#elif	HAVE_SDRPLAY
 	   theDevice    = new sdrplayHandler (theRadio,
 	                                      frequency,
-                                              ppmOffset,
+	                                      0,
                                               GRdB,
                                               lnaState,
                                               autogain,
                                               0,
                                               0);
+	} catch (int e) {}
 #endif
+#ifdef	HAVE_PLUTO
+	if (theDevice == nullptr) {
+	   try {
+	      theDevice	= new plutoHandler	(theRadio,
+	                                         frequency,
+	                                         gain,
+	                                         autogain);
+	   } catch (int e) {}
 	}
-	catch (int e) {
-	   std::cerr << "allocating device failed (" << e << "), fatal\n";
+#endif
+	if (theDevice == nullptr) {
+	   std::cerr << "allocating device failed, fatal\n";
 	   exit (32);
-	}
-
-	if (theDevice == nullptr) {	// cannot happen
-	   fprintf (stderr, "no device selected, fatal\n");
-	   exit (33);
 	}
 
 	timesyncSet.		store (false);
@@ -429,30 +414,18 @@ void    printOptions (void) {
 "                          dab-cmdline options are\n"
 "	                  -T Duration\tstop after <Duration> seconds\n"
 "	                  -M Mode\tMode is 1, 2 or 4. Default is Mode 1\n"
+"			  -B Band\tdefault BAND III\n"
 "	                  -D number\tamount of time to look for an ensemble\n"
 "	                  -d number\tseconds to reach time sync\n"
 "	                  -P name\tprogram to be selected in the ensemble\n"
 "			  -A name\t select the audio channel (portaudio)\n"
+"	                  -Q autogain (default off)\n"
 "	                  -O fileName\t output to file <name>\n"
+"	                  -C Channel\n"
 "	for pluto:\n"
-"	                  -B Band\tBand is either L_BAND or BAND_III (default)\n"
-"	                  -C Channel\n"
 "	                  -G Gain in dB (range 0 .. 70)\n"
-"	                  -Q autogain (default off)\n"
-"	                  -p number\t ppm offset\n"
-	
 "	for SDRplay:\n"
-"	                  -B Band\tBand is either L_BAND or BAND_III (default)\n"
-"	                  -C Channel\n"
 "	                  -G Gain reduction in dB (range 20 .. 59)\n"
-"	                  -L lnaState (depends on model chosen)\n"
-"	                  -Q autogain (default off)\n"
-"	                  -p number\t ppm offset\n"
-"	for airspy:\n"
-"	                  -B Band\tBand is either L_BAND or BAND_III (default)\n"
-"	                  -C Channel\n"
-"	                  -G number\t	gain, range 1 .. 21\n"
-"	                  -b set rf bias\n"
-"	                  -c number\t ppm Correction\n";
+"	                  -L lnaState (depends on model chosen)\n";
 }
 

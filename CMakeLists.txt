@@ -1,9 +1,9 @@
 cmake_minimum_required( VERSION 2.8.11 )
 set (objectName dab_cmdline-2)
-#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -flto")
-#set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11  -pg")
-set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -flto")
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11  -pg")
+#set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set (CMAKE_INSTALL_PREFIX "/usr/local/bin" CACHE PATH "default install path" FORCE )
 endif()
@@ -40,24 +40,12 @@ if ( (NOT SDRPLAY) AND (NOT PLUTO) )
    set(SDRPlay ON)
 endif ()
 
-set (objectName "")
-
 if(SDRPLAY)
-   if (objectName STREQUAL "")
       set(SDRPLAY ON)
-      set(objectName dab-sdrplay)
-   else ()
-      message ("Ignoring second option")
-   endif ()
 endif ()
 
 if(PLUTO)
-   if (objectName STREQUAL "")
       set(PLUTOSDR ON)
-      set(objectName dab-pluto)
-   else ()
-      message ("Ignoring second option")
-   endif ()
 endif ()
 
 #########################################################################
@@ -331,9 +319,9 @@ endif ()
         endif()
 
 	target_link_libraries (${objectName}
-	                       ${FFTW3F_LIBRARIES}
 	                       ${extraLibs}
 	                       ${FAAD_LIBRARIES}
+	                       ${FFTW3F_LIBRARIES}
 	                       ${CMAKE_DL_LIBS}
 	)
 
